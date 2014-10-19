@@ -3,4 +3,3 @@ cron:
   url: /deleteold
   schedule: every monday 04:00
   timezone: America/New_York
-  login: admin
