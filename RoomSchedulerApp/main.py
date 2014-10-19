@@ -113,6 +113,13 @@ class AboutHandler(BaseHandler):
   def get(self):
 	template_args = {}
 	self.render_template("about.html", **template_args)
+
+class DeleteOldHandler(BaseHandler):
+  def get(self):
+    today = datetime.datetime.today()
+    olds = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate < DATETIME(:year,:month,:day,0,0,0)",year=today.year,month=today.month,day=today.day).run()
+    for oldr in olds:
+      oldr.delete()
 		
 application = webapp2.WSGIApplication([
     webapp2.Route(r'/', handler=MainHandler, name='home'),
@@ -126,7 +133,8 @@ application = webapp2.WSGIApplication([
     webapp2.Route(r'/delete', handler=DeletionHandler, name='delete'),
     webapp2.Route(r'/calendar', handler=CalendarHandler, name='cal'),
     webapp2.Route(r'/calendarembed', handler=CalendarEmbedHandler, name='calembed'),
-	webapp2.Route(r'/about', handler=AboutHandler, name='about'),
+    webapp2.Route(r'/about', handler=AboutHandler, name='about'),
+    webapp2.Route(r'/deleteold', handler=DeleteOldHandler, name='deleteold'),
 ], debug=True)
 
 def main():

@@ -43,7 +43,6 @@ class RoomDetailHandler(BaseHandler):
       today = date.today()
       daylist = [today,today+datetime.timedelta(days=1),today+datetime.timedelta(days=2)]
       daystr=map(lambda x: x.strftime("%a %m/%d"), daylist)
-      logging.info(daystr)
       template_args = {
         'roomnum': roomnum,
         'timetable': timetable,

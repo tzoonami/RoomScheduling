@@ -1,0 +1,5 @@
+cron:
+- description: weekly old data removal job
+  url: /deleteold
+  schedule: every monday 04:00
+  timezone: America/New_York

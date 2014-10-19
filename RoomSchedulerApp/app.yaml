@@ -55,3 +55,7 @@ handlers:
 
 - url: /.*
   script: main.py
+  
+- url: /deleteold
+  script: main.py
+  login: admin
