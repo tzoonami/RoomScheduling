@@ -21,13 +21,14 @@ import logging
 import urllib
 import datetime
 import time
+import uuid
 
 from google.appengine.ext import db
 import webapp2
 from google.appengine.ext.webapp import util
 from google.appengine.api import mail, users
 #from aeoid import middleware, users
-from webapp2_extras import jinja2
+from webapp2_extras import jinja2, json
 import datetime
 
 from models import *
@@ -120,6 +121,34 @@ class DeleteOldHandler(BaseHandler):
     olds = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate < DATETIME(:year,:month,:day,0,0,0)",year=today.year,month=today.month,day=today.day).run()
     for oldr in olds:
       oldr.delete()
+
+class CalendarJsonHandler(BaseHandler):
+  def get(self):
+    start=datetime.datetime.strptime(self.request.get('start'),"%Y-%m-%d")
+    end=datetime.datetime.strptime(self.request.get('end'),"%Y-%m-%d")
+    eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
+    json_list = []
+    for event in eventlist:
+      #eid=uuid.uuid4().int
+      etitle=event.userid + "/" + event.roomnum
+      if (event.starttime%2) == 0:
+        starthour=event.starttime/2
+        startminute=0
+      else:
+        starthour=event.starttime/2
+        startminute=30
+      if (event.endtime%2) == 0:
+        endhour = event.endtime/2
+        endminute=0
+      else:
+        endhour=event.endtime/2
+        endminute=30
+      edtstart=datetime.datetime(event.startdate.year, event.startdate.month, event.startdate.day,starthour+8,startminute).strftime("%Y-%m-%dT%H:%M:%S")
+      edtend=datetime.datetime(event.startdate.year, event.startdate.month, event.startdate.day,endhour+8,endminute).strftime("%Y-%m-%dT%H:%M:%S")
+      json_entry = {'start':edtstart, 'end':edtend, 'allDay': False,'title':etitle}
+      json_list.append(json_entry)
+    self.response.headers['Content-Type'] = 'application/json'
+    self.response.out.write(json.encode(json_list))
 		
 application = webapp2.WSGIApplication([
     webapp2.Route(r'/', handler=MainHandler, name='home'),
@@ -135,6 +164,7 @@ application = webapp2.WSGIApplication([
     webapp2.Route(r'/calendarembed', handler=CalendarEmbedHandler, name='calembed'),
     webapp2.Route(r'/about', handler=AboutHandler, name='about'),
     webapp2.Route(r'/deleteold', handler=DeleteOldHandler, name='deleteold'),
+    webapp2.Route(r'/eventfeed', handler=CalendarJsonHandler, name='calendarjson'),
 ], debug=True)
 
 def main():
