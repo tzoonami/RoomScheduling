@@ -82,6 +82,12 @@ class RoomDetailHandler(BaseHandler):
       if not failflag and int(etime)-int(stime) <= 0:
         failflag = True
         reason = "Your end time was before the start time."
+      if not failflag:
+        blocks = genblocktable(roomnum,startdatetime.date())
+        for i in range(int(stime),int(etime)):
+          if blocks[i] == "Reserved":
+            failflag = True
+            reason = "The room is already reserved at that time."
       if failflag:
         template_args = {
           'reason': reason,
