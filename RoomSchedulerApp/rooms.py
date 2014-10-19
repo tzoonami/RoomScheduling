@@ -12,30 +12,16 @@ import logging
 from main import BaseHandler
 from models import *
 
-def genblocktable(room):
-  todayblocks=["Free"]*24
-  tomorrowblocks=["Free"]*24
-  dayafterblocks=["Free"]*24
-  today = date.today()
-  tomorrow = today+datetime.timedelta(days=1)
-  dayafter = today+datetime.timedelta(days=2)
-  todayschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2", room, today).run()
-  #RoomSchedule.all().filter("roomnum =", room).filter("startdate =", today)
-  tomorrowschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2", room, tomorrow).run()
-  dayafterschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2", room, dayafter).run()
-  if todayschedule is not None:
-    for sched in todayschedule:
+def genblocktable(room, day):
+  # day is an actual datetime object representing the desired day
+  dayblocks=["Free"]*24
+  #logging.info(day.strftime("%a %m/%d"))
+  dayschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2", room, day).run()
+  if dayschedule is not None:
+    for sched in dayschedule:
       for i in range(sched.starttime, sched.endtime):
-        todayblocks[i] = "Reserved"
-  if tomorrowschedule is not None:
-    for sched in tomorrowschedule:
-      for i in range(sched.starttime, sched.endtime):
-        tomorrowblocks[i] = "Reserved"
-  if dayafterschedule is not None:
-    for sched in dayafterschedule:
-      for i in range(sched.starttime, sched.endtime):
-        dayafterblocks[i] = "Reserved"
-  return [todayblocks,tomorrowblocks,dayafterblocks]
+        dayblocks[i] = "Reserved"
+  return dayblocks
 
 class RoomHandler(BaseHandler):
   def get(self):
@@ -54,10 +40,15 @@ class RoomDetailHandler(BaseHandler):
     if q.get() is None:
       self.response.write('Error: invalid room number selected')
     else:
+      today = date.today()
+      daylist = [today,today+datetime.timedelta(days=1),today+datetime.timedelta(days=2)]
+      daystr=map(lambda x: x.strftime("%a %m/%d"), daylist)
+      logging.info(daystr)
       template_args = {
         'roomnum': roomnum,
         'timetable': timetable,
-        'blocktable': genblocktable(roomnum)
+        'blocktable': [genblocktable(roomnum,daylist[0]),genblocktable(roomnum,daylist[1]),genblocktable(roomnum,daylist[2])],
+        'daystr': daystr,
       }
       self.render_template("roomdetail.html", **template_args)
 
