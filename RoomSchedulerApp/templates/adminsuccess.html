@@ -54,5 +54,29 @@
 		{% endfor %}
 		</table>
 		{% endif %}
+		
+		{% if crqs %}
+		Conflicting requests (You attempted to approve these requests, but there are conflicts within them that prevent this. Check their times, dates, and room numbers for conflicts with each other.):<br />
+			<table class="table">
+			
+			<tr>
+			<th>Room Number</th>
+			<th>User ID</th>
+			<th>Start Date</th>
+			<th>Start Time</th>
+			<th>End Time</th>
+			</tr>
+			
+		{% for crq in crqs %}
+		<tr>
+			<td>{{crq.roomnum}}</td>
+			<td>{{crq.userid}}</td>
+			<td>{{crq.startdate}}</td>
+			<td>{{timetable[crq.starttime]}}</td>
+			<td>{{timetable[crq.endtime]}}</td>
+		<tr>
+		{% endfor %}
+		</table>
+		{% endif %}
 	
 {% endblock %}

@@ -1,9 +1,14 @@
 from google.appengine.ext import db
 import webapp2
 from google.appengine.api import users, mail
+import itertools
+import logging
 
 from main import BaseHandler
 from models import *
+
+def is_overlapping(rq1, rq2):
+  return max(rq1.starttime,rq2.starttime) <= min(rq1.endtime,rq2.endtime)
 
 
 class AdminListHandler(BaseHandler):
@@ -27,6 +32,29 @@ class AdminListHandler(BaseHandler):
     drqs = self.request.get_all("deny")
     parqs = []
     pdrqs = []
+    roomdaylist = []
+    crqs = []
+    pcrqs = []
+    pcrqks = []
+    for rq in arqs:
+      rq = db.get(rq)
+      roomday = (rq.roomnum, rq.startdate)
+      if roomday in roomdaylist:
+        crqs.append(rq)
+      else:
+        roomdaylist.append(roomday)
+    for crq in crqs:
+      allcrqs = db.GqlQuery("SELECT * FROM ScheduleRequest WHERE roomnum = :rnum AND startdate = :sdate", rnum=crq.roomnum, sdate=crq.startdate).run()
+      for pair in itertools.combinations(allcrqs,2):
+        if is_overlapping(pair[0],pair[1]):
+          if str(pair[0].key()) not in pcrqks:
+            pcrqs.append(pair[0])
+            pcrqks.append(str(pair[0].key()))
+            arqs.remove(str(pair[0].key()))
+          if str(pair[1].key()) not in pcrqks:
+            pcrqs.append(pair[1])
+            pcrqks.append(str(pair[1].key()))
+            arqs.remove(str(pair[1].key())) 
     for rq in arqs:
       if rq in drqs: drqs.remove(rq)
       rq = db.get(rq)
@@ -61,6 +89,7 @@ class AdminListHandler(BaseHandler):
       'user': users.get_current_user(),
       'arqs': parqs,
       'drqs': pdrqs,
+      'crqs': pcrqs,
       'timetable': timetable
     } 
     self.render_template("adminsuccess.html", **template_args)
