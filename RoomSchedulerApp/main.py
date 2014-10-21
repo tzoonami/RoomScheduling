@@ -85,18 +85,30 @@ class CalendarHandler(BaseHandler):
     events = RoomSchedule.all()
     response = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//roomscheduling/eventcal//EN\n"
     for event in events:
-      if (event.starttime%2) == 0:
-        starthour=event.starttime/2
+      if (event.starttime%4) == 0:
+        starthour=event.starttime/4
         startminute=0
-      else:
-        starthour=event.starttime/2
+      elif (event.starttime%4) == 1:
+        starthour=event.starttime/4
+        startminute=15
+      elif (event.starttime%4) == 2:
+        starthour=event.starttime/4
         startminute=30
-      if (event.endtime%2) == 0:
-        endhour = event.endtime/2
-        endminute=0
       else:
-        endhour=event.endtime/2
+        starthour=event.starttime/4
+        startminute=45
+      if (event.endtime%4) == 0:
+        endhour = event.endtime/4
+        endminute=0
+      elif (event.endtime%4) == 1:
+        endhour=event.endtime/4
+        endminute=15
+      elif (event.endtime%4) == 2:
+        endhour=event.endtime/4
         endminute=30
+      else:
+        endhour=event.endtime/4
+        endminute=45
       dtstart=datetime.datetime(event.startdate.year, event.startdate.month, event.startdate.day,starthour+8,startminute).strftime("%Y%m%dT%H%M%S")
       dtend=datetime.datetime(event.startdate.year, event.startdate.month, event.startdate.day,endhour+8,endminute).strftime("%Y%m%dT%H%M%S")
       response += 'BEGIN:VEVENT\nDTSTART;TZID="America/New_York":%s\nDTEND;TZID="America/New_York":%s\nLOCATION:%s\nSUMMARY:%s\nEND:VEVENT\n' % (dtstart,dtend,event.roomnum,event.userid)
@@ -137,18 +149,30 @@ class CalendarJsonHandler(BaseHandler):
     for event in eventlist:
       #eid=uuid.uuid4().int
       etitle=event.userid + "/" + event.roomnum if allflag else "Reserved"
-      if (event.starttime%2) == 0:
-        starthour=event.starttime/2
+      if (event.starttime%4) == 0:
+        starthour=event.starttime/4
         startminute=0
-      else:
-        starthour=event.starttime/2
+      elif (event.starttime%4) == 1:
+        starthour=event.starttime/4
+        startminute=15
+      elif (event.starttime%4) == 2:
+        starthour=event.starttime/4
         startminute=30
-      if (event.endtime%2) == 0:
-        endhour = event.endtime/2
-        endminute=0
       else:
-        endhour=event.endtime/2
+        starthour=event.starttime/4
+        startminute=45
+      if (event.endtime%4) == 0:
+        endhour = event.endtime/4
+        endminute=0
+      elif (event.endtime%4) == 1:
+        endhour=event.endtime/4
+        endminute=15
+      elif (event.endtime%4) == 2:
+        endhour=event.endtime/4
         endminute=30
+      else:
+        endhour=event.endtime/4
+        endminute=45
       edtstart=datetime.datetime(event.startdate.year, event.startdate.month, event.startdate.day,starthour+8,startminute).strftime("%Y-%m-%dT%H:%M:%S")
       edtend=datetime.datetime(event.startdate.year, event.startdate.month, event.startdate.day,endhour+8,endminute).strftime("%Y-%m-%dT%H:%M:%S")
       json_entry = {'start':edtstart, 'end':edtend, 'allDay': False,'title':etitle}
