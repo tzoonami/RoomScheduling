@@ -126,11 +126,17 @@ class CalendarJsonHandler(BaseHandler):
   def get(self):
     start=datetime.datetime.strptime(self.request.get('start'),"%Y-%m-%d")
     end=datetime.datetime.strptime(self.request.get('end'),"%Y-%m-%d")
-    eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
+    rnum = self.request.get('room')
+    if rnum == 'all':
+      allflag = True
+      eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
+    else:
+      allflag = False
+      eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE roomnum = :roomnum AND startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",roomnum=rnum,syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
     json_list = []
     for event in eventlist:
       #eid=uuid.uuid4().int
-      etitle=event.userid + "/" + event.roomnum
+      etitle=event.userid + "/" + event.roomnum if allflag else "Reserved"
       if (event.starttime%2) == 0:
         starthour=event.starttime/2
         startminute=0

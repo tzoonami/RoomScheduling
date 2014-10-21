@@ -15,7 +15,13 @@ $('#calendar').fullCalendar({
 	minTime: "08:00:00",
 	maxTime: "20:00:00",
 	contentHeight:550,
-	events: '/eventfeed'
+	events: {
+		url: '/eventfeed',
+		type: 'GET',
+		data: {
+			room: 'all'
+		}
+	}
 })
 });
 </script>

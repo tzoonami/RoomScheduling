@@ -5,6 +5,30 @@
 	<script src="http://code.jquery.com/jquery-1.9.1.min.js"></script>
 	<link rel="stylesheet" href="/css/datepicker.css">
 	<script src="/static/bootstrap-datepicker.js"></script>
+	<link rel='stylesheet' href='/static/fullcalendar.css' />
+	<script src='/static/lib/moment.min.js'></script>
+	<script src='/static/fullcalendar.js'></script>
+	
+	<script>
+	$(document).ready(function() {
+
+		$('#calendar').fullCalendar({
+			defaultView:'agendaWeek',
+			allDaySlot: false,
+			minTime: "08:00:00",
+			maxTime: "20:00:00",
+			contentHeight:550,
+			events: {
+				url: '/eventfeed',
+				type: 'GET',
+				data: {
+					room: '{{ roomnum }}'
+				}
+			}
+		})
+		
+	});
+	</script>
 {% endblock %}
 
 {% block content %}
@@ -106,41 +130,8 @@
     </div>
   </div>
 </form>
-	
-	<table class="table">
-		<tr>
-			<th>Time</th>
-			<th>{{daystr[0]}}</th>
-			<th>{{daystr[1]}}</th>
-			<th>{{daystr[2]}}</th>
-		</tr>
-<tr><td>8:00 AM</td> <td>{{blocktable[0][0]}}</td> <td>{{blocktable[1][0]}}</td> <td>{{blocktable[2][0]}}</td> </tr>
-<tr><td>8:30 AM</td> <td>{{blocktable[0][1]}}</td> <td>{{blocktable[1][1]}}</td> <td>{{blocktable[2][1]}}</td> </tr>
-<tr><td>9:00 AM</td> <td>{{blocktable[0][2]}}</td> <td>{{blocktable[1][2]}}</td> <td>{{blocktable[2][2]}}</td> </tr>
-<tr><td>9:30 AM</td> <td>{{blocktable[0][3]}}</td> <td>{{blocktable[1][3]}}</td> <td>{{blocktable[2][3]}}</td> </tr>
-<tr><td>10:00 AM</td> <td>{{blocktable[0][4]}}</td> <td>{{blocktable[1][4]}}</td> <td>{{blocktable[2][4]}}</td> </tr>
-<tr><td>10:30 AM</td> <td>{{blocktable[0][5]}}</td> <td>{{blocktable[1][5]}}</td> <td>{{blocktable[2][5]}}</td> </tr>
-<tr><td>11:00 AM</td> <td>{{blocktable[0][6]}}</td> <td>{{blocktable[1][6]}}</td> <td>{{blocktable[2][6]}}</td> </tr>
-<tr><td>11:30 AM</td> <td>{{blocktable[0][7]}}</td> <td>{{blocktable[1][7]}}</td> <td>{{blocktable[2][7]}}</td> </tr>
-<tr><td>12:00 PM</td> <td>{{blocktable[0][8]}}</td> <td>{{blocktable[1][8]}}</td> <td>{{blocktable[2][8]}}</td> </tr>
-<tr><td>12:30 PM</td> <td>{{blocktable[0][9]}}</td> <td>{{blocktable[1][9]}}</td> <td>{{blocktable[2][9]}}</td> </tr>
-<tr><td>1:00 PM</td> <td>{{blocktable[0][10]}}</td> <td>{{blocktable[1][10]}}</td> <td>{{blocktable[2][10]}}</td> </tr>
-<tr><td>1:30 PM</td> <td>{{blocktable[0][11]}}</td> <td>{{blocktable[1][11]}}</td> <td>{{blocktable[2][11]}}</td> </tr>
-<tr><td>2:00 PM</td> <td>{{blocktable[0][12]}}</td> <td>{{blocktable[1][12]}}</td> <td>{{blocktable[2][12]}}</td> </tr>
-<tr><td>2:30 PM</td> <td>{{blocktable[0][13]}}</td> <td>{{blocktable[1][13]}}</td> <td>{{blocktable[2][13]}}</td> </tr>
-<tr><td>3:00 PM</td> <td>{{blocktable[0][14]}}</td> <td>{{blocktable[1][14]}}</td> <td>{{blocktable[2][14]}}</td> </tr>
-<tr><td>3:30 PM</td> <td>{{blocktable[0][15]}}</td> <td>{{blocktable[1][15]}}</td> <td>{{blocktable[2][15]}}</td> </tr>
-<tr><td>4:00 PM</td> <td>{{blocktable[0][16]}}</td> <td>{{blocktable[1][16]}}</td> <td>{{blocktable[2][16]}}</td> </tr>
-<tr><td>4:30 PM</td> <td>{{blocktable[0][17]}}</td> <td>{{blocktable[1][17]}}</td> <td>{{blocktable[2][17]}}</td> </tr>
-<tr><td>5:00 PM</td> <td>{{blocktable[0][18]}}</td> <td>{{blocktable[1][18]}}</td> <td>{{blocktable[2][18]}}</td> </tr>
-<tr><td>5:30 PM</td> <td>{{blocktable[0][19]}}</td> <td>{{blocktable[1][19]}}</td> <td>{{blocktable[2][19]}}</td> </tr>
-<tr><td>6:00 PM</td> <td>{{blocktable[0][20]}}</td> <td>{{blocktable[1][20]}}</td> <td>{{blocktable[2][20]}}</td> </tr>
-<tr><td>6:30 PM</td> <td>{{blocktable[0][21]}}</td> <td>{{blocktable[1][21]}}</td> <td>{{blocktable[2][21]}}</td> </tr>
-<tr><td>7:00 PM</td> <td>{{blocktable[0][22]}}</td> <td>{{blocktable[1][22]}}</td> <td>{{blocktable[2][22]}}</td> </tr>
-<tr><td>7:30 PM</td> <td>{{blocktable[0][23]}}</td> <td>{{blocktable[1][23]}}</td> <td>{{blocktable[2][23]}}</td> </tr>
-		
-	</table>
-</div>
+
+<div id='calendar'></div>
   <script>
 jQuery(function($) {
     $( ".input-group.date" ).datepicker();

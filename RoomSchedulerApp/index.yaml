@@ -14,5 +14,10 @@ indexes:
   properties:
   - name: roomnum
   - name: startdate
+
+- kind: RoomSchedule
+  properties:
+  - name: roomnum
+  - name: startdate
   - name: endtime
   - name: starttime
