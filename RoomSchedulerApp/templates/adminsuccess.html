@@ -78,5 +78,29 @@
 		{% endfor %}
 		</table>
 		{% endif %}
+		
+		{% if erqs %}
+		Requests that conflict with existing reservations (you have previously approved requests that conflict with these, they have been automatically denied):<br />
+			<table class="table">
+			
+			<tr>
+			<th>Room Number</th>
+			<th>User ID</th>
+			<th>Start Date</th>
+			<th>Start Time</th>
+			<th>End Time</th>
+			</tr>
+			
+		{% for erq in erqs %}
+		<tr>
+			<td>{{erq.roomnum}}</td>
+			<td>{{erq.userid}}</td>
+			<td>{{erq.startdate}}</td>
+			<td>{{timetable[erq.starttime]}}</td>
+			<td>{{timetable[erq.endtime]}}</td>
+		<tr>
+		{% endfor %}
+		</table>
+		{% endif %}
 	
 {% endblock %}

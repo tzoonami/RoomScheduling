@@ -14,7 +14,7 @@ from models import *
 
 def genblocktable(room, day):
   # day is an actual datetime object representing the desired day
-  dayblocks=["Free"]*24
+  dayblocks=["Free"]*48
   #logging.info(day.strftime("%a %m/%d"))
   dayschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2", room, day).run()
   if dayschedule is not None:
