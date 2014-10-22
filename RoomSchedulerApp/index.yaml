@@ -10,6 +10,30 @@ indexes:
 # automatically uploaded to the admin console when you next deploy
 # your application using appcfg.py.
 
+- kind: RoomInfo
+  properties:
+  - name: building
+  - name: roomnum
+
+- kind: RoomSchedule
+  properties:
+  - name: building
+  - name: roomnum
+  - name: startdate
+
+- kind: RoomSchedule
+  properties:
+  - name: building
+  - name: roomnum
+  - name: startdate
+  - name: endtime
+  - name: starttime
+
+- kind: RoomSchedule
+  properties:
+  - name: building
+  - name: startdate
+
 - kind: RoomSchedule
   properties:
   - name: roomnum

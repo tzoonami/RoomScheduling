@@ -7,16 +7,19 @@ import re
 from hashlib import sha1
 from random import random
 import logging
+import os
+from os import listdir
+from os.path import isfile, join
 
 
 from main import BaseHandler
 from models import *
 
-def genblocktable(room, day):
+def genblocktable(building, room, day):
   # day is an actual datetime object representing the desired day
   dayblocks=["Free"]*48
   #logging.info(day.strftime("%a %m/%d"))
-  dayschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2", room, day).run()
+  dayschedule = db.GqlQuery("SELECT starttime, endtime FROM RoomSchedule WHERE roomnum = :1 AND startdate = :2 AND building = :3", room, day, building).run()
   if dayschedule is not None:
     for sched in dayschedule:
       for i in range(sched.starttime, sched.endtime):
@@ -24,19 +27,30 @@ def genblocktable(room, day):
   return dayblocks
 
 class RoomHandler(BaseHandler):
-  def get(self):
+  def get(self,building):
     user = users.get_current_user()
-    nums = RoomInfo.all().order("roomnum")
-    template_args = {
-      'logout_url': users.create_logout_url('/'),
-      'user': user,
-      'nums': nums
-      }
-    self.render_template("rooms.html", **template_args)
+    q = db.GqlQuery("SELECT * FROM BuildingInfo WHERE buildingname = :1", building)
+    if q.get() is None:
+      self.response.write('Error: invalid building name selected')
+    else:
+      templatepath = join(os.getcwd(),"templates")
+      templates = [ f for f in listdir(templatepath) if isfile(join(templatepath,f)) ]
+      if 'rooms-%s.html' % building in templates:
+        template = 'rooms-%s.html' % building
+      else:
+        template = 'rooms.html'
+      nums = RoomInfo.all().filter("building =", building).order("roomnum")
+      template_args = {
+        'logout_url': users.create_logout_url('/'),
+        'user': user,
+        'building': building,
+        'rooms': nums
+        }
+      self.render_template(template, **template_args)
 
 class RoomDetailHandler(BaseHandler):
-  def get(self, roomnum):
-    q = db.GqlQuery("SELECT * FROM RoomInfo WHERE roomnum= :1", roomnum)
+  def get(self, building, roomnum):
+    q = db.GqlQuery("SELECT * FROM RoomInfo WHERE building = :1 AND roomnum= :2", building, roomnum)
     if q.get() is None:
       self.response.write('Error: invalid room number selected')
     else:
@@ -46,12 +60,12 @@ class RoomDetailHandler(BaseHandler):
       template_args = {
         'roomnum': roomnum,
         'timetable': timetable,
-        'blocktable': [genblocktable(roomnum,daylist[0]),genblocktable(roomnum,daylist[1]),genblocktable(roomnum,daylist[2])],
         'daystr': daystr,
+        'building': building,
       }
       self.render_template("roomdetail.html", **template_args)
 
-  def post(self, roomnum):
+  def post(self, building, roomnum):
     try:
       failflag = False
       reason = ""
@@ -82,7 +96,7 @@ class RoomDetailHandler(BaseHandler):
         failflag = True
         reason = "Your end time was before the start time."
       if not failflag:
-        blocks = genblocktable(roomnum,startdatetime.date())
+        blocks = genblocktable(building, roomnum,startdatetime.date())
         for i in range(int(stime),int(etime)):
           if blocks[i] == "Reserved":
             failflag = True
@@ -96,6 +110,7 @@ class RoomDetailHandler(BaseHandler):
         return
       dkey = sha1(str(random())).hexdigest()
       rss = ScheduleRequest(roomnum=rnum,userid=uid,useremail=uemail,role="admin",timestamp=timestamp,
+      building=building,
       deletekey=dkey,
       startdate = startdatetime.date(),
       starttime = int(stime), 
@@ -104,9 +119,9 @@ class RoomDetailHandler(BaseHandler):
       sender_address = "Room Scheduling Notification <notification@roomscheduler490.appspotmail.com>"
       subject = "Schedule Request deletion URL"
       body = """
-      Your request of room %s from %s to %s on %s has been submitted. If you need to delete this request, use the link below.
+      Your request of room %s in building %s from %s to %s on %s has been submitted. If you need to delete this request, use the link below.
       http://roomscheduler490.appspot.com/delete?dkey=%s
-      """ % (rnum,timetable[int(stime)],timetable[int(etime)],sdate, dkey)
+      """ % (rnum,building,timetable[int(stime)],timetable[int(etime)],sdate, dkey)
       user_address = uemail
       mail.send_mail(sender_address, user_address, subject, body)
     except ValueError:
@@ -127,9 +142,12 @@ class RoomDetailHandler(BaseHandler):
 
 
 class RoomListHandler(BaseHandler):
-  def get(self):
+  def get(self,building):
     user = users.get_current_user()
-    rms = RoomSchedule.all()
+    if building == "all":
+      rms = RoomSchedule.all()
+    else:
+      rms = RoomSchedule.all().filter("building =", building)
     uisAdmin = False if not user else UserInfo.isAdmin(user.user_id())
     template_args = {
       'user': user,
@@ -138,6 +156,14 @@ class RoomListHandler(BaseHandler):
       'isadmin': uisAdmin,
     }
     self.render_template("roomlist.html", **template_args)
+
+class BuildingHandler(BaseHandler):
+  def get(self):
+    buildings = BuildingInfo.all()
+    template_args = {
+      'buildings': buildings
+      }
+    self.render_template("buildings.html", **template_args)
 
 class DeletionHandler(BaseHandler):
   def get(self):

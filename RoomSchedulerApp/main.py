@@ -52,7 +52,7 @@ class MainHandler(BaseHandler):
     if user:
       q = db.GqlQuery("SELECT * FROM UserInfo WHERE userid = :1", user.user_id())
       if not q.get():
-        uinfo = UserInfo(userid=user.user_id(),email=user.email(), nickname=user.nickname(), role="student")
+        uinfo = UserInfo(userid=user.user_id(),email=user.email(), nickname=user.nickname(), role="student", building="")
         uinfo.put()
     uisAdmin = False if not user else UserInfo.isAdmin(user.user_id())
     template_args = {
@@ -81,8 +81,8 @@ class MailHandler(BaseHandler):
     self.response.write('Sent Message')
 
 class CalendarHandler(BaseHandler):
-  def get(self):
-    events = RoomSchedule.all()
+  def get(self,building):
+    events = RoomSchedule.all().filter("building =",building)
     response = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//roomscheduling/eventcal//EN\n"
     for event in events:
       if (event.starttime%4) == 0:
@@ -117,8 +117,10 @@ class CalendarHandler(BaseHandler):
     self.response.out.write(response)
 
 class CalendarEmbedHandler(BaseHandler):
-  def get(self):
-    template_args = {}
+  def get(self, building):
+    template_args = {
+      'building': building
+      }
     self.render_template("calendarembed.html", **template_args)
                       
 
@@ -139,12 +141,16 @@ class CalendarJsonHandler(BaseHandler):
     start=datetime.datetime.strptime(self.request.get('start'),"%Y-%m-%d")
     end=datetime.datetime.strptime(self.request.get('end'),"%Y-%m-%d")
     rnum = self.request.get('room')
+    rbuilding = self.request.get('building')
     if rnum == 'all':
       allflag = True
-      eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
+      if rbuilding == 'all':
+        eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
+      else:
+        eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE building = :building AND startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",building=rbuilding,syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
     else:
       allflag = False
-      eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE roomnum = :roomnum AND startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",roomnum=rnum,syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
+      eventlist = db.GqlQuery("SELECT * FROM RoomSchedule WHERE building = :building AND roomnum = :roomnum AND startdate > DATETIME(:syear,:smonth,:sday,0,0,0) AND startdate < DATETIME(:eyear,:emonth,:eday,0,0,0)",building=rbuilding,roomnum=rnum,syear=start.year,smonth=start.month,sday=start.day,eyear=end.year,emonth=end.month,eday=end.day).run()
     json_list = []
     for event in eventlist:
       #eid=uuid.uuid4().int
@@ -182,16 +188,17 @@ class CalendarJsonHandler(BaseHandler):
 		
 application = webapp2.WSGIApplication([
     webapp2.Route(r'/', handler=MainHandler, name='home'),
-    webapp2.Route(r'/rooms', handler=RoomHandler, name='room-list'),
-    webapp2.Route(r'/rooms/<roomnum>', handler=RoomDetailHandler, name='room-detail'),
+    webapp2.Route(r'/rooms', handler=BuildingHandler, name='buildings'),
+    webapp2.Route(r'/rooms/<building>', handler=RoomHandler, name='room-list'),
+    webapp2.Route(r'/rooms/<building>/<roomnum>', handler=RoomDetailHandler, name='room-detail'),
     webapp2.Route(r'/help', handler=HelpHandler, name='help'),
     webapp2.Route(r'/sendmail', handler=MailHandler, name='contact'),
     webapp2.Route(r'/equipment', handler=EquipHandler, name='equip'),
-    webapp2.Route(r'/roomlist', handler=RoomListHandler, name='scheduledrooms'),
+    webapp2.Route(r'/roomlist/<building>', handler=RoomListHandler, name='scheduledrooms'),
     webapp2.Route(r'/admin', handler=AdminListHandler, name='admin'),
     webapp2.Route(r'/delete', handler=DeletionHandler, name='delete'),
-    webapp2.Route(r'/calendar', handler=CalendarHandler, name='cal'),
-    webapp2.Route(r'/calendarembed', handler=CalendarEmbedHandler, name='calembed'),
+    webapp2.Route(r'/calendar/<building>', handler=CalendarHandler, name='cal'),
+    webapp2.Route(r'/calendarembed/<building>', handler=CalendarEmbedHandler, name='calembed'),
     webapp2.Route(r'/about', handler=AboutHandler, name='about'),
     webapp2.Route(r'/deleteold', handler=DeleteOldHandler, name='deleteold'),
     webapp2.Route(r'/eventfeed', handler=CalendarJsonHandler, name='calendarjson'),

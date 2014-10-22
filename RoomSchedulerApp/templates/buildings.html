@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+{% block title %}Select a building{% endblock %}
+{% block head %}
+	{{ super() }}
+{% endblock %}
+
+{% block content %}
+<div class="col-md-9">
+<ul>
+{% for building in buildings %}
+<li><a href="/rooms/{{building.buildingname}}">{{building.buildingname.capitalize()}}</a></li>
+{% endfor %}
+</div>
+{% endblock %}

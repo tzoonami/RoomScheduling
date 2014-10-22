@@ -20,7 +20,11 @@ class AdminListHandler(BaseHandler):
     elif not UserInfo.isAdmin(user.user_id()):
       self.redirect("/")
     else:
-      rqs = ScheduleRequest.all()
+      building = UserInfo.getBuilding(user.user_id())
+      if building == "all": #only for debugging, admins flagged as all should not POST
+        rqs = ScheduleRequest.all()
+      else:
+        rqs = ScheduleRequest.all().filter("building =", building)
       template_args ={
         'user': user,
         'rqs': rqs,
@@ -29,6 +33,8 @@ class AdminListHandler(BaseHandler):
       self.render_template("adminlist.html", **template_args)
 
   def post(self):
+    user = users.get_current_user()
+    building = UserInfo.getBuilding(user.user_id())
     arqs = self.request.get_all("approve") # approved request list
     drqs = self.request.get_all("deny") # denied request list
     erqs = [] # existing reservation conflicts
@@ -47,7 +53,7 @@ class AdminListHandler(BaseHandler):
       else:
         roomdaylist.append(roomday)
     for crq in crqs:
-      allcrqs = db.GqlQuery("SELECT * FROM ScheduleRequest WHERE roomnum = :rnum AND startdate = :sdate", rnum=crq.roomnum, sdate=crq.startdate).run()
+      allcrqs = db.GqlQuery("SELECT * FROM ScheduleRequest WHERE roomnum = :rnum AND startdate = :sdate AND building = :cbuilding", rnum=crq.roomnum, sdate=crq.startdate, cbuilding=building).run()
       for pair in itertools.combinations(allcrqs,2):
         if is_overlapping(pair[0],pair[1]):
           if str(pair[0].key()) not in pcrqks:
@@ -60,7 +66,7 @@ class AdminListHandler(BaseHandler):
             arqs.remove(str(pair[1].key()))
     for rq in arqs:
       rq = db.get(rq)
-      blocks = genblocktable(rq.roomnum,rq.startdate)
+      blocks = genblocktable(rq.building,rq.roomnum,rq.startdate)
       for i in range(rq.starttime,rq.endtime):
         if blocks[i] == "Reserved":
           erqs.append(rq)
@@ -73,7 +79,7 @@ class AdminListHandler(BaseHandler):
       accepted = RoomSchedule(roomnum=rq.roomnum, userid=rq.userid,role=rq.role,
                               startdate=rq.startdate,
                               starttime=rq.starttime,endtime=rq.endtime,
-                              deletekey=rq.deletekey, reserved=True)
+                              deletekey=rq.deletekey, building=rq.building, reserved=True)
       accepted.put()
       sender_address = "Room Scheduling Notification <notification@roomscheduler490.appspotmail.com>"
       subject = "Your request has been approved"

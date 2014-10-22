@@ -2,9 +2,9 @@
 {% block title %}Calendar{% endblock %}
 {% block head %}
 	{{ super() }}
-<link rel='stylesheet' href='static/fullcalendar.css' />
-<script src='static/lib/moment.min.js'></script>
-<script src='static/fullcalendar.js'></script>
+<link rel='stylesheet' href='/static/fullcalendar.css' />
+<script src='/static/lib/moment.min.js'></script>
+<script src='/static/fullcalendar.js'></script>
 
 <script>
 $(document).ready(function() {
@@ -19,7 +19,8 @@ $('#calendar').fullCalendar({
 		url: '/eventfeed',
 		type: 'GET',
 		data: {
-			room: 'all'
+			room: 'all',
+			building: '{{building}}'
 		}
 	}
 })
